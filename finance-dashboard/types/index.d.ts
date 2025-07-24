@@ -8,13 +8,13 @@ declare type SearchParamProps = {
 // ========================================
 
 declare type SignUpParams = {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   address1: string;
   city: string;
   state: string;
-  postalCode: string;
-  dateOfBirth: string;
+  postal_code: string;
+  date_of_birth: string;
   ssn: string;
   email: string;
   password: string;
@@ -210,7 +210,7 @@ declare interface TotlaBalanceBoxProps {
 
 declare interface FooterProps {
   user: User;
-  type?: 'mobile' | 'desktop'
+  type?: "mobile" | "desktop";
 }
 
 declare interface RightSidebarProps {

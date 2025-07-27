@@ -23,11 +23,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="FinPilot Core API", lifespan=lifespan)
 
 # Middleware
-origins = [
-    "http://localhost:3000",
-]
-if settings.ENV == "production":
+if settings.MODE == "production":
     origins = [settings.Frontend_Url]  # or load from env
+else: 
+    origins = [
+        "http://localhost:3000",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,15 +38,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
-
+# Include API routes
 @app.get("/")
 async def root():
     return {"message": "Welcome to FinPilot Core API!"}
 
-
-# Include API routes
 app.include_router(api_router)
 
 

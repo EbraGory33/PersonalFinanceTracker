@@ -7,17 +7,17 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)),
 
 class Settings(BaseSettings):
     
-    ENV: str = os.getenv("ENV", "development")
+    MODE: str = os.getenv("MODE", "development")
 
     # Dynamic cookie settings
     @property
     def SECURE_COOKIE(self) -> bool:
-        return self.ENV == "production"
+        return self.MODE == "production"
 
     @property
     def SAME_SITE(self) -> str:
         # Use None for cross-site in production (requires Secure=True)
-        return "none" if self.ENV == "production" else "lax"
+        return "none" if self.MODE == "production" else "lax"
     
     Frontend_Url: str
     

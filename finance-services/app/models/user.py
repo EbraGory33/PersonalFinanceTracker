@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.orm import relationship
 from app.utils.database import Base
 
 
@@ -39,3 +40,14 @@ class User(Base):
     dwolla_customer_id = Column(String(100), nullable=True)
     dwolla_customer_url = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
+
+    banks = relationship(
+        "Bank",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    transactions = relationship(
+        "Transaction",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )

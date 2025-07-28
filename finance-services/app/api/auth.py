@@ -1,3 +1,4 @@
+from email import message
 from fastapi import APIRouter, Depends, status, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -54,7 +55,13 @@ async def signin(
     )
     return response
     
-
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(response: Response):
+    response.delete_cookie(
+        key="jwt",
+        path="/"
+    )
+    return {"message": "Logout successful"}
 
 @router.get("/authenticate", response_model=UserResponse, status_code=status.HTTP_200_OK)
 async def get_profile(current_user: User = Depends(authenticate_user)):

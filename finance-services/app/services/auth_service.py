@@ -139,7 +139,7 @@ async def register_user(user: SignupRequest, db: Session) -> UserResponse:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while creating user."
+            detail=f"Internal server error while creating user: {str(e)}"
         )
     except Exception as e:
         db.rollback()

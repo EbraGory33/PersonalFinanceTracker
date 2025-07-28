@@ -18,9 +18,9 @@ export const signIn = async ({ email, password }: signInProps) => {
   }
 };
 
-export const signUp = async ({ password, ssn, ...userData }: SignUpParams) => {
+export const signUp = async (params: SignUpParams) => {
   try {
-    const user = await apiFetch("auth/signup", userData, "POST");
+    const user = await apiFetch("auth/signup", params, "POST");
     return user;
   } catch (error) {
     console.error("Error", error);

@@ -4,6 +4,10 @@ from contextlib import asynccontextmanager
 from app.api.router import api_router
 
 from app.utils.database import Base, engine
+# TODO: Remove Models
+from app.models.user import User
+from app.models.bank import Bank
+from app.models.transactions import Transaction
 
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings

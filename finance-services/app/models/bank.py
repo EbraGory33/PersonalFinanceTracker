@@ -14,3 +14,8 @@ class Bank(Base):
     sharable_id = Column(String(100))
 
     user = relationship("User", back_populates="banks")
+    transactions = relationship(
+        "Transaction",
+        back_populates="bank",
+        cascade="all, delete-orphan"
+    )

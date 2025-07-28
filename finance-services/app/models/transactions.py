@@ -17,5 +17,5 @@ class Transaction(Base):
     sender_bank_id = Column(Integer, nullable=True)
     receiver_bank_id = Column(Integer, nullable=True)
 
-    user = relationship("User")
-    bank = relationship("Bank")
+    user = relationship("User", back_populates="transactions")
+    bank = relationship("Bank", back_populates="transactions")

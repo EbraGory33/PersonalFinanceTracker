@@ -29,16 +29,17 @@ declare type User = {
   $id: string;
   email: string;
   userId: string;
-  dwollaCustomerUrl: string;
-  dwollaCustomerId: string;
-  firstName: string;
-  lastName: string;
+  dwolla_customer_url: string;
+  dwolla_customer_id: string;
+  first_name: string;
+  last_name: string;
   address1: string;
   city: string;
   state: string;
-  postalCode: string;
-  dateOfBirth: string;
+  postal_code: string;
+  date_of_birth: string;
   ssn: string;
+  is_active: boolean;
 };
 
 declare type NewUserParams = {

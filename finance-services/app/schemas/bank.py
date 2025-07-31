@@ -1,7 +1,9 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 
-
+class PublicTokenRequest(BaseModel):
+    public_token: str
+    
 class CreateBankAccountRequest(BaseModel):
     user_id: str = Field(..., alias="userId")
     bank_id: str = Field(..., alias="bankId")

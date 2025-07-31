@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import {
   createLinkToken,
   exchangePublicToken,
-} from "@/lib/actions/user.actions";
+} from "@/lib/actions/bank.actions";
 
 export const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
   const router = useRouter();
@@ -25,9 +25,9 @@ export const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
 
   const onSuccess = useCallback<PlaidLinkOnSuccess>(
     async (public_token: string) => {
+      console.log("Calling exchangePublicToken");
       await exchangePublicToken({
         publicToken: public_token,
-        user,
       });
 
       router.push("/");
@@ -46,7 +46,7 @@ export const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
       <>
         {variant === "primary" ? (
           <Button
-            onClick={() => open}
+            onClick={() => open()}
             disabled={!ready}
             className="plaidlink-primary"
           >
@@ -54,7 +54,7 @@ export const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
           </Button>
         ) : variant === "ghost" ? (
           <Button
-            onClick={() => open}
+            onClick={() => open()}
             disabled={!ready}
             className="plaidlink-ghost"
           >
@@ -62,7 +62,7 @@ export const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
           </Button>
         ) : (
           <Button
-            onClick={() => open}
+            onClick={() => open()}
             disabled={!ready}
             className="plaidlink-default"
           >

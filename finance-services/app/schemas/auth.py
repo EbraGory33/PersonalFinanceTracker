@@ -58,6 +58,3 @@ class SigninRequest(BaseModel):
                 "password": "SecurePass123"
             }
         }
-
-class PublicTokenRequest(BaseModel):
-    public_token: str

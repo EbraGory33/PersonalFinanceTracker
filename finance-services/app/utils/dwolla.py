@@ -50,10 +50,22 @@ async def create_dwolla_customer(new_customer: dict) -> Optional[str]:
     except Exception as e:
         print("Creating a Dwolla Customer Failed:", e)
 
+    # except Error as e:
+    #     error_body = e.body
+    #     for err in error_body.get('_embedded', {}).get('errors', []):
+    #         if err.get('code') == 'Duplicate' and '/email' in err.get('path', ''):
+    #             existing_url = err.get('_links', {}).get('about', {}).get('href')
+    #             logger.info(f"Customer already exists. Using existing customer: {existing_url}")
+    #             return existing_url
+    #     raise
+
 
 def create_on_demand_authorization() -> Optional[dict]:
     try:
-        response = dwolla_client.post("on-demand-authorizations")
+        application_token = dwolla_client.Auth.client()
+        response = application_token.post("on-demand-authorizations")
+
+        # response = dwolla_client.post("on-demand-authorizations")
         return response.body.get("_links")
     except Exception as e:
         print("Creating On Demand Authorization Failed:", e)
@@ -61,14 +73,24 @@ def create_on_demand_authorization() -> Optional[dict]:
 
 def create_funding_source(customer_id: str, funding_source_name: str, plaid_token: str) -> Optional[str]:
     try:
-        res = dwolla_client.post(
+        application_token = dwolla_client.Auth.client()
+        response = application_token.post(    
             f"customers/{customer_id}/funding-sources",
             {
                 "name": funding_source_name,
                 "plaidToken": plaid_token
             }
         )
-        return res.headers.get("location")
+        
+        
+        # res = dwolla_client.post(
+        #     f"customers/{customer_id}/funding-sources",
+        #     {
+        #         "name": funding_source_name,
+        #         "plaidToken": plaid_token
+        #     }
+        # )
+        return response.headers.get("location")
     except Exception as e:
         print("Creating Funding Source Failed:", e)
 
@@ -101,15 +123,24 @@ def add_funding_source(
     bank_name: str
 ) -> Optional[str]:
     try:
+        print("calling create_on_demand_authorization()")
         dwolla_auth_links = create_on_demand_authorization()
+        print("finished create_on_demand_authorization()")
+
+        print("dwolla_auth_links: ", dwolla_auth_links)
+        
+        
         if not dwolla_auth_links:
             raise Exception("Authorization failed.")
-
+        
+        print("calling create_funding_source()")
         funding_source_url = create_funding_source(
             customer_id=dwolla_customer_id,
             funding_source_name=bank_name,
             plaid_token=processor_token
         )
+        print("finished create_funding_source()")
+
         return funding_source_url
     except Exception as e:
         print("Add Funding Source Failed:", e)

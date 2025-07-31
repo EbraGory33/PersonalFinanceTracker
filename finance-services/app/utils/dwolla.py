@@ -1,5 +1,5 @@
 import os
-from dwollav2 import Client
+from dwollav2 import Client, Error
 from typing import Optional
 from app.core.config import settings
 
@@ -9,10 +9,9 @@ def extractCustomerIdFromUrl(url : str):
     parts = url.split('/')
     
     #Extract the last part, which represents the customer ID
-    customerId = parts[parts.length-1]
+    customerId = parts[-1]
 
     return customerId
-
 
 def get_environment() -> str:
     environment = settings.DWOLLA_ENV
@@ -28,10 +27,26 @@ dwolla_client = Client(
     environment=get_environment()
 )
 
-def create_dwolla_customer(new_customer: dict, type: str) -> Optional[str]:
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+# , type: str
+async def create_dwolla_customer(new_customer: dict) -> Optional[str]:
+    logger.info("create_dwolla_customer called")
     try:
-        res = dwolla_client.post("customers", new_customer)
-        return res.headers.get("location")
+        application_token = dwolla_client.Auth.client()
+        res = dwolla_client.auth_url
+        logger.info(f"Dwolla response: {res}")
+        logger.info(f"res: {res}")
+        logger.info(f"application_token: {application_token}")
+
+        customer_response = application_token.post('customers', new_customer)
+        customer_url = customer_response.headers['Location']
+        logger.info(f"Customer created successfully: {customer_url}, type: {type(customer_url)}")
+        
+        return customer_url
     except Exception as e:
         print("Creating a Dwolla Customer Failed:", e)
 

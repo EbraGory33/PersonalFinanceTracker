@@ -12,6 +12,11 @@ from app.models.transactions import Transaction
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+
 
 # Lifespan handler
 @asynccontextmanager

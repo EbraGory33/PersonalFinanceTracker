@@ -31,6 +31,8 @@ from app.schemas.auth import SignupRequest
 from argon2 import PasswordHasher
 from cryptography.fernet import Fernet
 
+from datetime import date, datetime
+
 ph = PasswordHasher()
 key = Fernet.generate_key()  # In production, load from secure vault
 cipher = Fernet(key)
@@ -140,8 +142,24 @@ async def register_user(user: SignupRequest, db: Session) -> UserResponse:
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
+        # user, type='personal'
 
-        dwollaCustomerUrl = await create_dwolla_customer(user, type='personal')
+
+        dwolla_payload = {
+            "firstName": db_user.first_name,
+            "lastName": db_user.last_name,
+            "email": db_user.email,
+            "type": "personal",
+            "address1": db_user.address1,
+            "city": db_user.city,
+            "state": db_user.state,
+            "postalCode": db_user.postal_code,
+            "dateOfBirth": db_user.date_of_birth,
+            "ssn": user.ssn if user.ssn else None
+        }
+
+        dwollaCustomerUrl = await create_dwolla_customer(dwolla_payload)
+
         if not dwollaCustomerUrl:
             raise Exception("Error creating Dwolla customer")
 

@@ -7,32 +7,22 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const Home = () => {
-  const { user, verify, logout, loading } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, verify, logout, loading, setLoading } = useAuth();
   const router = useRouter();
-  //const [user, setUser] = useState<User>();
-  const loggedIn = {
-    first_name: "Ebrahim", // TODO: Remove this
-    last_name: "Gory", // TODO: Remove this
-    email: "eGory@gmail.com", // TODO: Remove this
-  };
 
   useEffect(() => {
     if (user) {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, [user]);
-  /*}
-  
+
   useEffect(() => {
     authenticated();
   }, []);
 
-  
-
   const authenticated = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       try {
         const userdata = await verify();
         console.log("userdata:", userdata);
@@ -44,16 +34,16 @@ const Home = () => {
         // Redirect to sign-in
         router.push("/sign-in");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
 
-      setIsLoading(false);
+      setLoading(false);
     } catch (error) {
       console.error("Error during authentication:", error);
       alert("Authentication failed. Check console for details.");
     }
   };
-  */
+
   if (loading) {
     return (
       <section className="home">

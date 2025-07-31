@@ -25,6 +25,7 @@ from app.models.user import User
 from app.schemas.auth import UserResponse, SignupRequest, SigninRequest
 from sqlalchemy.orm import Session
 from app.utils.database import get_db
+from app.utils.dwolla import create_dwolla_customer, extractCustomerIdFromUrl
 
 from app.schemas.auth import SignupRequest
 from argon2 import PasswordHasher
@@ -91,8 +92,17 @@ async def authenticate_user(request: Request, db: Session = Depends(get_db)):
 
 async def register_user(user: SignupRequest, db: Session) -> UserResponse:
     """
-    Register a new user by hashing the password and encrypting sensitive fields,
-    then saving the user data to the database.
+    Register a new user by securely processing sensitive fields, saving the user to the database,
+    and creating a corresponding Dwolla customer. If Dwolla customer creation fails, the user
+    record is removed from the database to maintain consistency.
+
+    Steps:
+        - Hashes the user's password.
+        - Encrypts sensitive data (e.g., SSN).
+        - Saves the user to the database.
+        - Creates a Dwolla customer.
+        - Updates the user with Dwolla identifiers.
+        - If Dwolla creation fails, deletes the user from the database.
 
     Args:
         user (SignupRequest): Pydantic model containing user registration data.
@@ -103,52 +113,66 @@ async def register_user(user: SignupRequest, db: Session) -> UserResponse:
 
     Raises:
         HTTPException:
-            - 409 Conflict if a user with the same email already exists.
-            - 500 Internal Server Error if database or unexpected errors occur.
+            - 500 Internal Server Error if any step fails, including user deletion fallback.
     """
+
+    
     # Hash password
     hashed_password = ph.hash(user.password)
     
     # Encrypt SSN if provided
     encrypted_ssn = cipher.encrypt(user.ssn.encode()).decode() if user.ssn else None
+
+    db_user = User(
+        first_name=user.first_name,
+        last_name=user.last_name,
+        email=user.email,
+        hashed_password=hashed_password,
+        ssn=encrypted_ssn,
+        address1=user.address1,
+        city=user.city,
+        state=user.state,
+        postal_code=user.postal_code,
+        date_of_birth=user.date_of_birth,
+    )
+
     try:
-        db_user = User(
-            first_name=user.first_name,
-            last_name=user.last_name,
-            email=user.email,
-            hashed_password=hashed_password,
-            ssn=encrypted_ssn,
-            address1=user.address1,
-            city=user.city,
-            state=user.state,
-            postal_code=user.postal_code,
-            date_of_birth=user.date_of_birth,
-        )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-    
-    except IntegrityError as e:
-        db.rollback()
-        # Assuming email uniqueness constraint error, customize as needed
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User with this email already exists."
-        )
-    except SQLAlchemyError as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error while creating user: {str(e)}"
-        )
+
+        dwollaCustomerUrl = await create_dwolla_customer(user, type='personal')
+        if not dwollaCustomerUrl:
+            raise Exception("Error creating Dwolla customer")
+
+        dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl)
+
+        # Update user with Dwolla info
+        db_user.dwolla_customer_url = dwollaCustomerUrl
+        db_user.dwolla_customer_id = dwollaCustomerId
+        db.commit()
+
     except Exception as e:
         db.rollback()
+
+        if db_user.id:
+            try:
+                db.delete(db_user)
+                db.commit()
+            except SQLAlchemyError as delete_error:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Dwolla failed and user delete also failed: {delete_error}"
+                )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error occurred:{e}"
+            detail=f"Failed to complete registration: {str(e)}"
         )
 
     return UserResponse.model_validate(db_user)
+
 
 async def validate_user_credentials(data: SigninRequest, db: Session) -> UserResponse:
     """

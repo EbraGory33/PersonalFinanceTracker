@@ -50,5 +50,5 @@ export const useAuth = () => {
     }
   };
 
-  return { user, loading, verify, signIn, signUp, logout };
+  return { user, loading, setLoading, verify, signIn, signUp, logout };
 };

@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+from typing import List
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
@@ -32,6 +33,19 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str
     POSTGRES_PORT: int
     POSTGRES_DB: str
+
+    # Plaid
+    PLAID_CLIENT_ID: str
+    PLAID_SECRET: str
+    PLAID_ENV: str = "sandbox"
+    PLAID_PRODUCT: List[str]
+    PLAID_COUNTRY_CODE: List[str]
+
+    #DWOLLA
+    DWOLLA_ENV: str = "sandbox"
+    DWOLLA_KEY: str
+    DWOLLA_SECRET: str
+    DWOLLA_BASE_URL: str
 
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]

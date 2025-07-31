@@ -12,8 +12,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { user, verify, loading, logout } = useAuth();
+  const { user, verify, loading, logout, setLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     authenticated();
@@ -21,13 +27,31 @@ export default function RootLayout({
 
   const authenticated = async () => {
     try {
-      await verify();
+      setLoading(true);
+      try {
+        const userdata = await verify();
+        console.log("userdata:", userdata);
+        console.log("user:", user);
+        //alert(`User data: ${JSON.stringify(userdata)}`);
+      } catch (error) {
+        console.error("Error during User authentication:", error);
+        await logout();
+        // Redirect to sign-in
+        router.push("/sign-in");
+      } finally {
+        setLoading(false);
+      }
+
+      setLoading(false);
     } catch (error) {
-      console.error("Error during User authentication:", error);
-      //await logout();
-      router.push("/sign-in");
+      console.error("Error during authentication:", error);
+      alert("Authentication failed. Check console for details.");
     }
   };
+
+  async function handleLogout() {
+    await logout();
+  }
 
   if (loading) {
     return (
@@ -37,8 +61,9 @@ export default function RootLayout({
     );
   }
 
-  if (!user) {
+  if (!user && !loading) {
     // Redirect to sign-in if not authenticated
+    handleLogout();
     router.push("/sign-in");
     return null; // Avoid rendering UI
   }

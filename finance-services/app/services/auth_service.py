@@ -191,7 +191,6 @@ async def register_user(user: SignupRequest, db: Session) -> UserResponse:
 
     return UserResponse.model_validate(db_user)
 
-
 async def validate_user_credentials(data: SigninRequest, db: Session) -> UserResponse:
     """
     Validate user credentials by verifying the email and password against stored data.
@@ -224,12 +223,15 @@ async def validate_user_credentials(data: SigninRequest, db: Session) -> UserRes
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error occurred:{e}"
         )
-    
+    print("User: ",user)
+    print("Password: ",data.password)
+    print("hashed_password: ",user.hashed_password)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid email or password")
     
     try:
-        ph.verify(user.hashed_password, data.password)
+        res = ph.verify(user.hashed_password, data.password)
+        print(res)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid username or password")
     

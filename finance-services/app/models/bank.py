@@ -11,7 +11,7 @@ class Bank(Base):
     account_id = Column(String(100))
     access_token = Column(String)  # Store encrypted in logic
     funding_source_url = Column(String(255))
-    sharable_id = Column(String(100))
+    shareable_id = Column(String(100))
 
     user = relationship("User", back_populates="banks")
     transactions = relationship(

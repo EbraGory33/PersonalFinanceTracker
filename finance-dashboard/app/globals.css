@@ -8,6 +8,10 @@
   padding: 0;
   box-sizing: border-box;
 }
+/* TEMP: Debug overflow layout */
+/* * {
+  border: 1px solid red;
+} */
 
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {

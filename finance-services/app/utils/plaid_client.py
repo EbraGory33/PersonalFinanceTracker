@@ -17,6 +17,7 @@ configuration = plaid.Configuration(
 api_client = plaid.ApiClient(configuration)
 client = plaid_api.PlaidApi(api_client)
 
+# TODO: Move these methods
 def encrypt_id(id: str) -> str:
     """Encodes a string ID to base64 format (like JavaScript's btoa)"""
     encoded_bytes = base64.b64encode(id.encode('utf-8'))

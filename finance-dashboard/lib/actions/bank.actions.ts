@@ -26,3 +26,30 @@ export const exchangePublicToken = async ({
     console.error("An error occurred while creating exchanging token:", error);
   }
 };
+
+export const getAccounts = async () => {
+  try {
+    const res = await apiFetch("bank/getAccounts", [], "GET");
+    return res;
+  } catch (error) {
+    console.error("Failed to create link token:", error);
+    return null;
+  }
+};
+export const getAccount = async (bankId: string) => {
+  try {
+    const res = await apiFetch(
+      "bank/getAccount",
+      { shareableId: bankId },
+      "GET"
+    );
+    return res;
+  } catch (error) {
+    console.error("Failed to create link token:", error);
+    return null;
+  }
+};
+
+export const getBankingInfo = async () => {};
+
+export const getTransactions = async () => {};

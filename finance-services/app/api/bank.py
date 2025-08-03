@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.services.bank_service import create_bank_account, create_plaid_link_token, exchange_public_token, get_user_banks
-from app.schemas.bank import PublicTokenRequest
+from app.schemas.bank import PublicTokenRequest, BankResponse, BanksResponse
 from app.models.user import User
+from app.models.bank import Bank
 # Auth Services & JWT
 from app.services.auth_service import authenticate_user
+# Bank Services
 from app.services.bank_service import create_bank_account
 # Utility Functions
 from app.utils.database import get_db
@@ -39,7 +40,8 @@ async def create_link_token(current_user: User = Depends(authenticate_user)):
         request = LinkTokenCreateRequest(
             user=LinkTokenCreateRequestUser(str(current_user.id)),
             client_name="Personal Finance Tracker",
-            products=[Products("auth")],
+            products=[Products(p) for p in settings.PLAID_PRODUCT], 
+            # products=[Products("auth")],
             country_codes=[CountryCode("US")],
             language='en',
         )
@@ -176,17 +178,57 @@ async def exchange_public_token(
 
 
 
+import asyncio
 
+from app.models.bank import Bank
+from app.schemas.bank import BankResponse, BanksResponse
+from app.services.bank_service import getAccount, getAccounts
 
+@router.get("/userBanks", response_model=BanksResponse)
+async def getBanks(current_user: User = Depends(authenticate_user) , db: Session = Depends(get_db)):
+    banks = db.query(Bank).filter(Bank.user_id == current_user.id).all()
+    # print(f"banks : {banks}")
+    bank_responses = [BankResponse.model_validate(bank) for bank in banks]
+    # print(f"bank_responses : {bank_responses}")
+    return BanksResponse(banks=bank_responses)
 
-@router.post("/link")
-async def link_bank():
-    return await create_plaid_link_token()
+@router.get("/getBank", response_model=BankResponse)
+async def getBank(
+    Bank_ID: int,
+    # bank_id: str = Query(..., description="ID of the bank to retrieve"),
+    current_user: User = Depends(authenticate_user), 
+    db: Session = Depends(get_db)
+):
+    # print(f"bank_id : {bank_id}")
 
-@router.post("/exchange")
-async def exchange_token():
-    return await exchange_public_token()
+    # bank = db.query(Bank).filter(Bank.bank_id == bank_id).first()
+    
+    # print(f"bank : {bank}")
 
-@router.get("/banks")
-async def list_banks():
-    return await get_user_banks()
+    # print(f"bank_id : {Bank_ID:}")
+
+    bank = db.query(Bank).filter(Bank.id == Bank_ID).first()
+    
+    # print(f"bank : {bank}")
+
+    if not bank:
+        raise HTTPException(
+            status_code=404,
+            detail="Bank not found"
+        )
+    
+    return bank
+
+@router.get("/getAccounts")
+async def get_all_accounts(current_user: User = Depends(authenticate_user) , db: Session = Depends(get_db)):
+    return await getAccounts(current_user,db)
+
+@router.get("/getAccount")
+async def get_single_account(
+    shareableId: str,
+    # Bank_ID: int, 
+    current_user: User = Depends(authenticate_user), 
+    db: Session = Depends(get_db)
+):
+    # return await getAccount(current_user,Bank_ID,db)
+    return await getAccount(current_user,shareableId,db)

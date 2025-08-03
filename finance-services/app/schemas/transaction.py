@@ -1,26 +1,42 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from app.models.user import User
+from datetime import datetime
 from typing import List
 
-class PublicTokenRequest(BaseModel):
-    public_token: str
-
-class BankResponse(BaseModel):
-    id: int
+class TransactionParams(BaseModel):
     user_id: int
-    bank_id: str
-    account_id: str
-    access_token: str
-    funding_source_url: Optional[str]
-    shareable_id: Optional[str]
+    bank_id: int
+    amount: float
+    type: Optional[str] = None
+    category: Optional[str] = None
+    pending: Optional[bool] = False
+    sender_bank_id: Optional[int] = None
+    receiver_bank_id: Optional[int] = None
+    date: Optional[datetime] = None 
 
     model_config = {
         "from_attributes": True
     }
 
-class BanksResponse(BaseModel):
-    banks: List[BankResponse]
+
+class TransactionResponse(BaseModel):
+    id: int
+    user_id: int
+    bank_id: int
+    amount: float
+    date: datetime
+    type: Optional[str] = None
+    category: Optional[str] = None
+    pending: Optional[bool] = False
+    sender_bank_id: Optional[int] = None
+    receiver_bank_id: Optional[int] = None
+
+    model_config = {
+        "from_attributes": True
+    }
+
+class TransactionsResponse(BaseModel):
+    transactions: List[TransactionResponse]
 
     model_config = {
         "from_attributes": True

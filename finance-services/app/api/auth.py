@@ -127,7 +127,12 @@ async def signin(
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(response: Response):
-    response.delete_cookie(key="jwt", path="/")
+    response.delete_cookie(
+        key="jwt",
+        path="/",
+        samesite=settings.SAME_SITE,
+        secure=settings.SECURE_COOKIE,
+    )
     return {"message": "Logout successful"}
 
 

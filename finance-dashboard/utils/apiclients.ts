@@ -14,7 +14,7 @@ const apiClient = axios.create({
 
 export async function apiFetch(
   path: string,
-  data?: Record<string, any>,
+  data?: Record<string, unknown>,
   method: HttpMethod = "GET"
 ) {
   try {
@@ -29,11 +29,39 @@ export async function apiFetch(
 
     const response = await apiClient(config);
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.detail || "API request failed");
-    } else {
+  } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof (error as any).response === "object" &&
+      (error as any).response !== null &&
+      "data" in (error as any).response
+    ) {
+      const err = error as { response: { data: { error?: string } } };
+      throw new Error(err.response.data.error || "API request failed");
+    } else if (error instanceof Error) {
       throw new Error(error.message || "API request failed");
+    } else {
+      throw new Error("API request failed");
     }
   }
 }
+
+//   } catch (error: any) {
+//     if (
+//       typeof error === "object" &&
+//       error !== null &&
+//       "response" in error &&
+//       typeof (error as any).response === "object" &&
+//       (error as any).response !== null &&
+//       "data" in (error as any).response
+//     ) {
+//       const err = error as { response: { data: { error?: string } } };
+//       throw new Error(err.response.data.error || "API request failed");
+//     } else if (error instanceof Error) {
+//       throw new Error(error.message || "API request failed");
+//     } else {
+//       throw new Error("API request failed");
+//     }
+// }

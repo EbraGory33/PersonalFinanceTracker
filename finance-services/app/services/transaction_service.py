@@ -1,92 +1,111 @@
-from fastapi import Depends, HTTPException
-from app.services.auth_service import authenticate_user
-from fastapi import HTTPException
+# ================================================
+# Imports
+# ================================================
+
+import asyncio
+
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from fastapi import Depends, HTTPException
 
-from app.utils.plaid_client import client, encrypt_id, decrypt_id  # Initialized PlaidApi instance
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
 
+from app.services.auth_service import authenticate_user
+from app.utils.plaid_client import client, encrypt_id, decrypt_id
 from app.models.user import User
 from app.models.bank import Bank
 from app.models.transactions import Transaction
+from app.schemas.transaction import (
+    TransactionParams,
+    TransactionResponse,
+    TransactionsResponse,
+)
 
-from app.schemas.transaction import TransactionParams, TransactionResponse, TransactionsResponse
-import asyncio
+# ================================================
+# Transaction Queries
+# ================================================
 
-# TODO: Transaction sneder and reciever
-async def getTransactionsByBank(current_user: User, current_bank: Bank, db: Session):
+
+async def get_transactions_by_bank(current_user: User, current_bank: Bank, db: Session):
+    """
+    Fetch transactions associated with a user and specific bank.
+    """
     try:
-        # transactions = db.query(Transaction).filter(
-        #         Transaction.user_id == current_user.id,
-        #         Transaction.bank_id == current_bank.id
-        #     ).all()
-        
-        transactions = db.query(Transaction).filter(
-            Transaction.user_id == current_user.id,
-            or_(
-                Transaction.sender_bank_id == current_bank.id,
-                Transaction.receiver_bank_id == current_bank.id
+        transactions = (
+            db.query(Transaction)
+            .filter(
+                or_(
+                    Transaction.sender_id == current_user.id,
+                    Transaction.receiver_id == current_user.id,
+                ),
+                or_(
+                    Transaction.sender_bank_id == current_bank.id,
+                    Transaction.receiver_bank_id == current_bank.id,
+                ),
             )
-        ).all()
+            .all()
+        )
 
-        # print(f"Transaction : {transactions}")
-        transactions_responses = [TransactionResponse.model_validate(transaction) for transaction in transactions]
-        # print(f"transactions_responses : {transactions_responses}")
-        
-        return transactions_responses
-    
+        return [
+            TransactionResponse.model_validate(transaction)
+            for transaction in transactions
+        ]
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not get Transactions : {e}")
+
 
 async def getAllTransactions(current_user: User, db: Session):
+    """
+    Fetch all transactions for a user.
+    """
     try:
-        transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
+        transactions = (
+            db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
+        )
 
-        # print(f"Transaction : {transactions}")
-        transactions_responses = [TransactionsResponse.model_validate(transaction) for transaction in transactions]
-        # print(f"transactions_responses : {transactions_responses}")
-        
         if not transactions:
-                raise HTTPException(
-                status_code=404,
-                detail="Transactions not found"
-                )
+            raise HTTPException(status_code=404, detail="Transactions not found")
 
-        # print(f"Transaction : {transactions}")
-        transactions_responses = [TransactionResponse.model_validate(transaction) for transaction in transactions]
-        # print(f"transactions_responses : {transactions_responses}")    
-        
-        return transactions_responses
+        return [
+            TransactionResponse.model_validate(transaction)
+            for transaction in transactions
+        ]
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not get Transactions : {e}")
-################################################## ####################################################################################################
+
+
+# ================================================
+# Create Transactions
+# ================================================
+
+
 async def createTransactions(
-    request: TransactionParams, 
-    currentuser, 
-    db: Session
+    request: TransactionParams, currentuser: User, db: Session
 ):
-    try:    
+    """
+    Create a new transaction record in the database.
+    """
+    try:
         if not currentuser:
             raise HTTPException(status_code=404, detail="User not found")
 
         new_transaction = Transaction(
-            user_id=request['user_id'],
-            bank_id=request['bank_id'],
-            amount = request['amount'],
-            date = request['date'],
-            type = request['type'],
-            category = request['category'],
-            pending = request['pending'],
-            sender_bank_id = request['sender_bank_id'],
-            receiver_bank_id = request['receiver_bank_id'],
+            user_id=request["user_id"],
+            bank_id=request["bank_id"],
+            amount=request["amount"],
+            date=request["date"],
+            type=request["type"],
+            category=request["category"],
+            pending=request["pending"],
+            sender_bank_id=request["sender_bank_id"],
+            receiver_bank_id=request["receiver_bank_id"],
         )
 
         db.add(new_transaction)
-        db.commit
+        db.commit()  # <-- Fixed missing parentheses
         db.refresh(new_transaction)
-
 
         return {
             "transaction": {
@@ -102,68 +121,64 @@ async def createTransactions(
                 "receiver_bank_id": new_transaction.receiver_bank_id,
             }
         }
+
     except Exception as e:
         print("Error creating transactions:", e)
-        raise HTTPException(status_code=500, detail=f"Error creating transactions: : {e}")
-    
+        raise HTTPException(status_code=500, detail=f"Error creating transactions: {e}")
 
 
-async def get_transactions(access_token: str,target_account_id: str):
+# ================================================
+# Plaid API: Get Transactions
+# ================================================
+
+
+async def get_transactions(access_token: str, target_account_id: str):
+    """
+    Fetch and filter transactions from Plaid API for a specific account.
+    """
     try:
         has_more = True
         cursor = None
         transactions = []
 
         while has_more:
-            # request = TransactionsSyncRequest(
-            #     access_token=access_token,
-            #     cursor=cursor  # initially None; will be updated in loop
-            # )
+            request = (
+                TransactionsSyncRequest(access_token=access_token, cursor=cursor)
+                if cursor
+                else TransactionsSyncRequest(access_token=access_token)
+            )
 
-            if cursor:
-                request = TransactionsSyncRequest(
-                    access_token=access_token,
-                    cursor=cursor
-                )
-            else:
-                request = TransactionsSyncRequest(
-                    access_token=access_token
-                )
-            
-            print("Gettin Transactions response : ")
-
+            print("Getting Transactions response...")
             response = client.transactions_sync(request)
             data = response.to_dict()
 
-            print("Transactions response data : ", data)
-
-            # Add new transactions (only "added"; others are "modified" or "removed")
             added_transactions = data.get("added", [])
-
-
-            print("Added Transactions data : ", added_transactions)
 
             for transaction in added_transactions:
                 if transaction.get("account_id") == target_account_id:
-                    transactions.append({
-                        "id": transaction.get("transaction_id"),
-                        "name": transaction.get("name"),
-                        "paymentChannel": transaction.get("payment_channel"),
-                        "type": transaction.get("payment_channel"),  # same as above
-                        "accountId": transaction.get("account_id"),
-                        "amount": transaction.get("amount"),
-                        "pending": transaction.get("pending"),
-                        "category": transaction.get("category")[0] if transaction.get("category") else "",
-                        "date": transaction.get("date"),
-                        "image": transaction.get("logo_url")  # Note: This may require a different source
-                    })
-            print("Transactions : ", transactions)
+                    transactions.append(
+                        {
+                            "id": transaction.get("transaction_id"),
+                            "name": transaction.get("name"),
+                            "payment_channel": transaction.get("payment_channel"),
+                            "type": transaction.get("payment_channel"),
+                            "account_id": transaction.get("account_id"),
+                            "amount": transaction.get("amount"),
+                            "pending": transaction.get("pending"),
+                            "category": (
+                                transaction.get("personal_finance_category", {}).get(
+                                    "primary"
+                                )
+                                if transaction.get("personal_finance_category")
+                                else ""
+                            ),
+                            "date": transaction.get("date"),
+                            "image": transaction.get("logo_url"),
+                        }
+                    )
 
             has_more = data.get("has_more", False)
-            # print("has_more : ", has_more)
-
             cursor = data.get("next_cursor")
-            
 
         return transactions
 

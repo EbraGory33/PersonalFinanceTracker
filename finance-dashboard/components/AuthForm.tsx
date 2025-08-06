@@ -10,20 +10,19 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import CustomInput from "./CustomInput";
-import { authFormSchema } from "@/lib/utils";
+import { auth_form_schema } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-//import { signIn, signUp } from "@/lib/actions/user.actions";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { PlaidLink } from "./PlaidLink";
 
 const AuthForm = ({ type }: { type: string }) => {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
-  const [user, setUser] = useState<User>();
+  const [user, setUser] = useState<user>();
   const [isLoading, setIsLoading] = useState(false);
 
-  const formSchema = authFormSchema(type);
+  const formSchema = auth_form_schema(type);
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -40,13 +39,13 @@ const AuthForm = ({ type }: { type: string }) => {
     try {
       if (type === "sign-up") {
         const userData = {
-          first_name: values.firstName!,
-          last_name: values.lastName!,
+          first_name: values.first_name!,
+          last_name: values.last_name!,
           address1: values.address1!,
           city: values.city!,
           state: values.state!,
-          postal_code: values.postalCode!,
-          date_of_birth: values.dateOfBirth!,
+          postal_code: values.postal_code!,
+          date_of_birth: values.date_of_birth!,
           ssn: values.ssn!,
           email: values.email,
           password: values.password,
@@ -106,13 +105,13 @@ const AuthForm = ({ type }: { type: string }) => {
                   <div className="flex gap-4">
                     <CustomInput
                       control={form.control}
-                      name="firstName"
+                      name="first_name"
                       label="First Name"
                       placeholder="Enter your first name"
                     />
                     <CustomInput
                       control={form.control}
-                      name="lastName"
+                      name="last_name"
                       label="Last Name"
                       placeholder="Enter your first name"
                     />
@@ -138,7 +137,7 @@ const AuthForm = ({ type }: { type: string }) => {
                     />
                     <CustomInput
                       control={form.control}
-                      name="postalCode"
+                      name="postal_code"
                       label="Postal Code"
                       placeholder="Example: 11101"
                     />
@@ -146,7 +145,7 @@ const AuthForm = ({ type }: { type: string }) => {
                   <div className="flex gap-4">
                     <CustomInput
                       control={form.control}
-                      name="dateOfBirth"
+                      name="date_of_birth"
                       label="Date of Birth"
                       placeholder="YYYY-MM-DD"
                     />

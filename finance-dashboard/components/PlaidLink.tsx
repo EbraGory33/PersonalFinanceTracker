@@ -12,7 +12,7 @@ import {
 } from "@/lib/actions/bank.actions";
 import Image from "next/image";
 
-export const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
+export const PlaidLink = ({ user, variant }: plaid_link_props) => {
   const router = useRouter();
   const [token, setToken] = useState("");
 
@@ -26,9 +26,9 @@ export const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
 
   const onSuccess = useCallback<PlaidLinkOnSuccess>(
     async (public_token: string) => {
-      console.log("Calling exchangePublicToken");
+      console.log("Calling exchangePublicToken ==>", public_token);
       await exchangePublicToken({
-        publicToken: public_token,
+        public_token: public_token,
       });
 
       router.push("/");

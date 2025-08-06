@@ -1,13 +1,9 @@
-/* eslint-disable no-unused-vars */
-
-declare type SearchParamProps = {
+declare type search_param_props = {
   params: { [key: string]: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  search_params: { [key: string]: string | string[] | undefined };
 };
 
-// ========================================
-
-declare type SignUpParams = {
+declare type sign_up_params = {
   first_name: string;
   last_name: string;
   address1: string;
@@ -20,15 +16,15 @@ declare type SignUpParams = {
   password: string;
 };
 
-declare type LoginUser = {
+declare type login_user = {
   email: string;
   password: string;
 };
 
-declare type User = {
-  $id: string;
+declare type user = {
+  id: number;
   email: string;
-  userId: string;
+  user_id: string;
   dwolla_customer_url: string;
   dwolla_customer_id: string;
   first_name: string;
@@ -42,288 +38,296 @@ declare type User = {
   is_active: boolean;
 };
 
-declare type NewUserParams = {
-  userId: string;
+declare type new_user_params = {
+  user_id: string;
   email: string;
   name: string;
   password: string;
 };
 
-declare type Account = {
+declare type account = {
+  data: AccountData;
+  transactions: transaction[];
+};
+
+declare type accounts_response = {
+  accounts: AccountData[];
+  total_banks: number;
+  total_current_balance: number;
+};
+
+declare type AccountData = {
   id: string;
-  availableBalance: number;
-  currentBalance: number;
-  officialName: string;
-  mask: string;
+  available_balance: number;
+  current_balance: number;
   institutionId: string;
   name: string;
+  officialName: string;
+  mask: string;
   type: string;
   subtype: string;
-  bankId: number;
-  shareableId: string;
+  bank_id: number;
+  shareable_id: string;
 };
 
 declare type Transaction = {
   id: string;
-  $id: string;
   name: string;
-  paymentChannel: string;
+  payment_channel: string;
   type: string;
   accountId: string;
   amount: number;
   pending: boolean;
   category: string;
   date: string;
-  image: string;
-  type: string;
-  $createdAt: string;
-  channel: string;
-  senderBankId: string;
-  receiverBankId: string;
+  sender_id: number | null;
+  receiver_id: number | null;
+  sender_bank_id: number | null;
+  receiver_bank_id: number | null;
+  image: string | null;
 };
 
-declare type Bank = {
-  $id: string;
-  accountId: string;
-  bankId: string;
-  accessToken: string;
-  fundingSourceUrl: string;
-  userId: string;
-  sharableId: string;
+declare type AccountWithTransactions = {
+  data: AccountData;
+  transactions: Transaction[];
 };
 
-declare type AccountTypes =
+declare type banks = {
+  banks: bank[];
+};
+
+declare type bank = {
+  id: number;
+  user_id: number;
+  bank_id: string;
+  account_id: string;
+  access_token: string;
+  funding_source_url: string;
+  shareable_id: string;
+};
+
+declare type account_types =
   | "depository"
   | "credit"
   | "loan "
   | "investment"
   | "other";
 
-declare type Category = "Food and Drink" | "Travel" | "Transfer";
+declare type category = "Food and Drink" | "Travel" | "Transfer";
 
-declare type CategoryCount = {
+declare type category_count = {
   name: string;
   count: number;
-  totalCount: number;
+  total_count: number;
 };
 
-declare type Receiver = {
-  firstName: string;
-  lastName: string;
+declare type receiver = {
+  first_name: string;
+  last_name: string;
 };
 
-declare type TransferParams = {
-  sourceFundingSourceUrl: string;
-  destinationFundingSourceUrl: string;
+declare type transfer_params = {
+  source_funding_source_url: string;
+  destination_funding_source_url: string;
   amount: string;
 };
 
-declare type AddFundingSourceParams = {
-  dwollaCustomerId: string;
-  processorToken: string;
-  bankName: string;
+declare type add_funding_source_params = {
+  dwolla_customer_id: string;
+  processor_token: string;
+  bank_name: string;
 };
 
-declare type NewDwollaCustomerParams = {
-  firstName: string;
-  lastName: string;
+declare type new_dwolla_customer_params = {
+  first_name: string;
+  last_name: string;
   email: string;
   type: string;
   address1: string;
   city: string;
   state: string;
-  postalCode: string;
-  dateOfBirth: string;
+  postal_code: string;
+  date_of_birth: string;
   ssn: string;
 };
 
-declare interface CreditCardProps {
-  account: Account;
-  userName: string;
-  showBalance?: boolean;
+declare interface credit_card_props {
+  account: AccountData;
+  user_name: string;
+  show_balance?: boolean;
 }
 
-declare interface BankInfoProps {
-  account: Account;
-  shareableId?: string;
+declare interface bank_info_props {
+  account: AccountData;
+  shareable_id?: string;
   type: "full" | "card";
 }
 
-declare interface HeaderBoxProps {
+declare interface header_box_props {
   type?: "title" | "greeting";
   title: string;
   subtext: string;
   user?: string;
 }
 
-declare interface MobileNavProps {
-  user: User;
+declare interface mobile_nav_props {
+  user: user | [];
 }
 
-declare interface PageHeaderProps {
-  topTitle: string;
-  bottomTitle: string;
-  topDescription: string;
-  bottomDescription: string;
-  connectBank?: boolean;
+declare interface page_header_props {
+  top_title: string;
+  bottom_title: string;
+  top_description: string;
+  bottom_description: string;
+  connect_bank?: boolean;
 }
 
-declare interface PaginationProps {
+declare interface pagination_props {
   page: number;
-  totalPages: number;
+  total_pages: number;
 }
 
-declare interface PlaidLinkProps {
-  user: User;
+declare interface plaid_link_props {
+  user: user;
   variant?: "primary" | "ghost";
-  dwollaCustomerId?: string;
+  dwolla_customer_id?: string;
 }
 
-// declare type User = sdk.Models.Document & {
-//   accountId: string;
-//   email: string;
-//   name: string;
-//   items: string[];
-//   accessToken: string;
-//   image: string;
-// };
-
-declare interface AuthFormProps {
+declare interface auth_form_props {
   type: "sign-in" | "sign-up";
 }
 
-declare interface BankDropdownProps {
-  accounts: Account[];
-  setValue?: UseFormSetValue<any>;
-  otherStyles?: string;
+declare interface bank_dropdown_props {
+  accounts: AccountData[];
+  set_value?: UseFormSetValue<any>;
+  other_styles?: string;
 }
 
-declare interface BankTabItemProps {
-  account: Account;
-  shareableId?: string;
+declare interface bank_tab_item_props {
+  account: AccountData;
+  shareable_id?: string;
 }
 
-declare interface TotlaBalanceBoxProps {
-  accounts: Account[];
-  totalBanks: number;
-  totalCurrentBalance: number;
+declare interface total_balance_box_props {
+  accounts: AccountData[];
+  total_banks: number;
+  total_current_balance: number;
 }
 
-declare interface FooterProps {
-  user: User;
+declare interface footer_props {
+  user: user | [];
   type?: "mobile" | "desktop";
 }
 
-declare interface RightSidebarProps {
-  user: User;
-  transactions: Transaction[];
-  banks: Bank[] & Account[];
+declare interface right_sidebar_props {
+  user: user | [];
+  transactions: transaction[];
+  banks: AccountData[];
 }
 
-declare interface SiderbarProps {
-  user: User;
+declare interface siderbar_props {
+  user: user;
 }
 
-declare interface RecentTransactionsProps {
-  accounts: Account[];
-  transactions: Transaction[];
-  shareableId: string;
+declare interface recent_transactions_props {
+  accounts: AccountData[];
+  transactions: transaction[];
+  shareable_id: string;
   page: number;
 }
 
-declare interface TransactionHistoryTableProps {
+declare interface transaction_history_table_props {
   transactions: Transaction[];
   page: number;
 }
 
-declare interface CategoryBadgeProps {
+declare interface category_badge_props {
   category: string;
 }
 
-declare interface TransactionTableProps {
+declare interface transaction_table_props {
   transactions: Transaction[];
 }
 
-declare interface CategoryProps {
-  category: CategoryCount;
+declare interface category_props {
+  category: category_count;
 }
 
-declare interface DoughnutChartProps {
-  accounts: Account[];
+declare interface doughnut_chart_props {
+  accounts: AccountData[];
 }
 
-declare interface PaymentTransferFormProps {
-  accounts: Account[];
+declare interface payment_transfer_form_props {
+  accounts: AccountData[];
 }
 
-// Actions
-declare interface getAccountsProps {
-  userId: string;
+declare interface get_accounts_props {
+  user_id: string;
 }
 
-declare interface getAccountProps {
-  appwriteItemId: string;
+declare interface get_account_props {
+  appwrite_item_id: string;
 }
 
-declare interface getInstitutionProps {
-  institutionId: string;
+declare interface get_institution_props {
+  institution_id: string;
 }
 
-declare interface getTransactionsProps {
-  accessToken: string;
+declare interface get_transactions_props {
+  access_token: string;
 }
 
-declare interface CreateFundingSourceOptions {
-  customerId: string; // Dwolla Customer ID
-  fundingSourceName: string; // Dwolla Funding Source Name
-  plaidToken: string; // Plaid Account Processor Token
-  _links: object; // Dwolla On Demand Authorization Link
+declare interface create_funding_source_options {
+  customer_id: string;
+  funding_source_name: string;
+  plaid_token: string;
+  _links: object;
 }
 
-declare interface CreateTransactionProps {
+declare interface create_transaction_props {
   name: string;
-  amount: string;
-  senderId: string;
-  senderBankId: string;
-  receiverId: string;
-  receiverBankId: string;
+  amount: number;
+  sender_id: number;
+  sender_bank_id: number;
+  receiver_id: number;
+  receiver_bank_id: number;
   email: string;
 }
 
-declare interface getTransactionsByBankIdProps {
-  bankId: string;
+declare interface get_transactions_by_bank_id_props {
+  bank_id: string;
 }
 
-declare interface signInProps {
+declare interface sign_in_props {
   email: string;
   password: string;
 }
 
-declare interface getUserInfoProps {
-  userId: string;
+declare interface get_user_info_props {
+  user_id: string;
 }
 
-declare interface exchangePublicTokenProps {
-  publicToken: string;
+declare interface exchange_public_token_props {
+  public_token: string;
 }
 
-declare interface createBankAccountProps {
-  accessToken: string;
-  userId: string;
-  accountId: string;
-  bankId: string;
-  fundingSourceUrl: string;
-  sharableId: string;
+declare interface create_bank_account_props {
+  access_token: string;
+  user_id: string;
+  account_id: string;
+  bank_id: string;
+  funding_source_url: string;
+  sharable_id: string;
 }
 
-declare interface getBanksProps {
-  userId: string;
+declare interface get_banks_props {
+  user_id: string;
 }
 
-declare interface getBankProps {
-  documentId: string;
+declare interface get_bank_props {
+  document_id: string;
 }
 
-declare interface getBankByAccountIdProps {
-  accountId: string;
+declare interface get_bank_by_account_id_props {
+  account_id: string;
 }

@@ -1,154 +1,148 @@
+# ================================================
+# Imports
+# ================================================
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from app.schemas.bank import PublicTokenRequest, BankResponse, BanksResponse
+
+from typing import Optional
+import logging
+import json
+import traceback
+
+# ========== Models ==========
 from app.models.user import User
 from app.models.bank import Bank
-# Auth Services & JWT
+
+# ========== Schemas ==========
+from app.schemas.bank import (
+    PublicTokenRequest,
+    BankResponse,
+    BanksResponse,
+)
+
+# ========== Services ==========
 from app.services.auth_service import authenticate_user
-# Bank Services
-from app.services.bank_service import create_bank_account
-# Utility Functions
+from app.services.bank_service import (
+    create_bank_account,
+    getAccount,
+    getAccounts,
+)
+
+# ========== Utilities ==========
 from app.utils.database import get_db
 from app.utils.dwolla import add_funding_source
-# App Config
+from app.utils.plaid_client import client, encrypt_id
 from app.core.config import settings
-# Plaid SDK
-from app.utils.plaid_client import client,encrypt_id  # Initialized PlaidApi instance
-# Plaid Link Token
+
+# ========== Plaid Models ==========
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.products import Products
 from plaid.model.country_code import CountryCode
-# Plaid Token Exchange & Accounts
-from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
+from plaid.model.item_public_token_exchange_request import (
+    ItemPublicTokenExchangeRequest,
+)
 from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.processor_token_create_request import ProcessorTokenCreateRequest
 
-import json
-import logging
-from typing import Optional
 
+# ================================================
+# Router Config
+# ================================================
+
+router = APIRouter(prefix="/bank", tags=["Bank"])
 logger = logging.getLogger(__name__)
 
 
-router = APIRouter(prefix="/bank", tags=["Bank"])
+# ================================================
+# Plaid Routes
+# ================================================
+
 
 @router.post("/plaid/create_link_token")
 async def create_link_token(current_user: User = Depends(authenticate_user)):
-    logger.info(f"Current User ID : {current_user.id}")
+    logger.info(f"Creating link token for user ID: {current_user.id}")
     try:
         request = LinkTokenCreateRequest(
             user=LinkTokenCreateRequestUser(str(current_user.id)),
             client_name="Personal Finance Tracker",
-            products=[Products(p) for p in settings.PLAID_PRODUCT], 
-            # products=[Products("auth")],
+            products=[Products(p) for p in settings.PLAID_PRODUCT],
             country_codes=[CountryCode("US")],
-            language='en',
+            language="en",
         )
-        logger.info(f"request : {request}")
+
         response = client.link_token_create(request)
-        logger.info(f"response : {response}")
-        
-        ## delete
-        response_dict = response.to_dict()
-        print(json.dumps(response_dict, indent=2, default=str))
-        #############################################################
-        logger.info(f"response_dict : {response_dict}")
-        logger.info(f"link_token : {response.link_token}")
+        logger.info(f"Link token created: {response.link_token}")
         return {"link_token": response.link_token}
     except Exception as e:
-        print(e)
+        logger.error(f"Error creating link token: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create Plaid link token")
+
 
 @router.post("/plaid/exchange_public_token")
 async def exchange_public_token(
     payload: PublicTokenRequest,
     current_user: User = Depends(authenticate_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     ACH_ELIGIBLE_SUBTYPES = ["checking", "savings"]
     try:
-        # Step 1: Exchange public token for access token and item ID
-        request = ItemPublicTokenExchangeRequest(public_token=payload.public_token)
-        response = client.item_public_token_exchange(request)
-        response_data = response.to_dict()
-        # print("Response Data:",response_data)
+        # Exchange public token for access token
+        exchange_request = ItemPublicTokenExchangeRequest(
+            public_token=payload.public_token
+        )
+        exchange_response = client.item_public_token_exchange(
+            exchange_request
+        ).to_dict()
 
-        access_token = response_data["access_token"]
-        print("Access Token:", access_token)
+        access_token = exchange_response["access_token"]
+        item_id = exchange_response["item_id"]
 
-        item_id = response_data["item_id"]
-        # print("Item ID:", item_id)
-        
-        # # log or save access_token to DB for user
-        # print("Response Data:",response_data)
-        # print("Access Token:", access_token)
-        # print("Item ID:", item_id)
+        # Get account info from Plaid
+        accounts_response = client.accounts_get(
+            AccountsGetRequest(access_token=access_token)
+        ).to_dict()
 
-        # Step 2: Get accounts using access token
-        accounts_request = AccountsGetRequest(access_token=access_token)
-        # print("Accounts request:",accounts_request)
-        
-        accounts_response = client.accounts_get(accounts_request)
-        # print("Accounts response:",accounts_response)
-
-        accounts_data = accounts_response.to_dict()
-        print("Accounts data:",accounts_data)
-        
-        accounts = accounts_data.get("accounts", [])
-        
+        accounts = accounts_response.get("accounts", [])
         if not accounts:
-            raise HTTPException(status_code=400, detail="No accounts found for the user")
-        
+            raise HTTPException(status_code=400, detail="No accounts found for user")
+
         bank_creation_messages = []
 
         for account in accounts:
-            print("Account data:",account)
-            
+            account_id = account["account_id"]
             account_type = account["type"]
             account_subtype = account["subtype"]
-
-            account_id = account["account_id"]
-            print("Account ID:", account_id)
-            
             bank_name = account["name"]
-            print("Bank Name:", bank_name)
 
-            # Skip unsupported accounts if absolutely invalid (very rare edge case)
             if not account_type or not account_subtype:
                 continue
 
-            # CASE 1: ACH-Eligible Account (checking/savings)
-            if account_type == "depository" and account_subtype in ACH_ELIGIBLE_SUBTYPES:
-                
-                # 3. Create processor token for Dwolla
-
+            # Handle ACH-eligible accounts
+            funding_source_url = None
+            if (
+                account_type == "depository"
+                and account_subtype in ACH_ELIGIBLE_SUBTYPES
+            ):
                 processor_request = ProcessorTokenCreateRequest(
                     access_token=access_token,
                     account_id=account_id,
-                    processor="dwolla"  # Just a string
+                    processor="dwolla",
                 )
-                processor_token_response = client.processor_token_create(processor_request).to_dict()
-                processor_token = processor_token_response["processor_token"]
-
-                print("processor_token_response:", processor_token_response)
-
-                # 4. Create Dwolla funding source (O)
+                processor_token = client.processor_token_create(
+                    processor_request
+                ).to_dict()["processor_token"]
                 funding_source_url = add_funding_source(
                     current_user.dwolla_customer_id,
                     processor_token,
-                    bank_name
+                    bank_name,
                 )
-
-                print("funding_source_url: ", funding_source_url)
-
                 if not funding_source_url:
                     raise Exception("Failed to create Dwolla funding source")
 
-            else:
-                print(f"Storing non-ACH account: {account_type} ({account_subtype})")
-                funding_source_url = None  # No Dwolla integration for these
-            
-            # 5. Create bank account in your system (O)
+            # Create bank in DB
             BankMessage = await create_bank_account(
                 {
                     "user_id": current_user.id,
@@ -159,76 +153,81 @@ async def exchange_public_token(
                     "shareable_id": encrypt_id(account_id),
                 },
                 current_user,
-                db
+                db,
             )
-            bank_creation_messages.append({
-                "account_id": account_id,
-                "bank_name": bank_name,
-                **BankMessage
-            })
-        
+
+            bank_creation_messages.append(
+                {"account_id": account_id, "bank_name": bank_name, **BankMessage}
+            )
+
         return {
             "public_token_exchange": "complete",
-            "banks_created": bank_creation_messages
+            "banks_created": bank_creation_messages,
         }
-    
+
     except Exception as e:
-        print("Error exchanging public token:", e)
-        raise HTTPException(status_code=500, detail=f"Could not exchange public token : {e}")
+        logger.error(f"Error exchanging public token: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Could not exchange public token: {str(e)}"
+        )
 
 
+# ================================================
+# Bank Retrieval Routes
+# ================================================
 
-import asyncio
-
-from app.models.bank import Bank
-from app.schemas.bank import BankResponse, BanksResponse
-from app.services.bank_service import getAccount, getAccounts
 
 @router.get("/userBanks", response_model=BanksResponse)
-async def getBanks(current_user: User = Depends(authenticate_user) , db: Session = Depends(get_db)):
+async def get_user_banks(
+    current_user: User = Depends(authenticate_user),
+    db: Session = Depends(get_db),
+):
     banks = db.query(Bank).filter(Bank.user_id == current_user.id).all()
-    # print(f"banks : {banks}")
     bank_responses = [BankResponse.model_validate(bank) for bank in banks]
-    # print(f"bank_responses : {bank_responses}")
     return BanksResponse(banks=bank_responses)
 
+
 @router.get("/getBank", response_model=BankResponse)
-async def getBank(
-    Bank_ID: int,
-    # bank_id: str = Query(..., description="ID of the bank to retrieve"),
-    current_user: User = Depends(authenticate_user), 
-    db: Session = Depends(get_db)
+async def get_bank_by_shareable_id(
+    shareableId: str,
+    current_user: User = Depends(authenticate_user),
+    db: Session = Depends(get_db),
 ):
-    # print(f"bank_id : {bank_id}")
-
-    # bank = db.query(Bank).filter(Bank.bank_id == bank_id).first()
-    
-    # print(f"bank : {bank}")
-
-    # print(f"bank_id : {Bank_ID:}")
-
-    bank = db.query(Bank).filter(Bank.id == Bank_ID).first()
-    
-    # print(f"bank : {bank}")
-
-    if not bank:
-        raise HTTPException(
-            status_code=404,
-            detail="Bank not found"
-        )
-    
+    bank = db.query(Bank).filter(Bank.shareable_id == shareableId).first()
+    if not bank or bank.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Bank not found")
     return bank
 
+
+# ================================================
+# Account-Specific Routes
+# ================================================
+
+
 @router.get("/getAccounts")
-async def get_all_accounts(current_user: User = Depends(authenticate_user) , db: Session = Depends(get_db)):
-    return await getAccounts(current_user,db)
+async def get_all_user_accounts(
+    current_user: User = Depends(authenticate_user),
+    db: Session = Depends(get_db),
+):
+    return await getAccounts(current_user, db)
+
 
 @router.get("/getAccount")
-async def get_single_account(
+async def get_single_user_account(
     shareableId: str,
-    # Bank_ID: int, 
-    current_user: User = Depends(authenticate_user), 
-    db: Session = Depends(get_db)
+    current_user: User = Depends(authenticate_user),
+    db: Session = Depends(get_db),
 ):
-    # return await getAccount(current_user,Bank_ID,db)
-    return await getAccount(current_user,shareableId,db)
+    try:
+        return await getAccount(current_user, shareableId, db)
+    except Exception as e:
+        tb = traceback.format_exc()
+        logger.error(f"Error fetching account: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": str(e),
+                "type": type(e).__name__,
+                "trace": tb,
+            },
+        )

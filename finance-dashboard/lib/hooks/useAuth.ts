@@ -4,7 +4,7 @@ import { useState } from "react";
 import { apiFetch } from "@/utils/apiclients";
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User>();
+  const [user, setUser] = useState<user>();
   const [loading, setLoading] = useState(true);
   const verify = async () => {
     try {
@@ -18,7 +18,7 @@ export const useAuth = () => {
     }
   };
 
-  const signIn = async ({ email, password }: signInProps) => {
+  const signIn = async ({ email, password }: sign_in_props) => {
     try {
       const userData = await apiFetch(
         "auth/signin",
@@ -32,7 +32,7 @@ export const useAuth = () => {
     }
   };
 
-  const signUp = async (params: SignUpParams) => {
+  const signUp = async (params: sign_up_params) => {
     try {
       const userData = await apiFetch("auth/signup", params, "POST");
       setUser(userData);

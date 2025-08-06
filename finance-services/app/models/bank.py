@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.utils.database import Base
+from app.models.transactions import Transaction
+
 
 class Bank(Base):
     __tablename__ = "banks"
@@ -14,8 +16,17 @@ class Bank(Base):
     shareable_id = Column(String(100))
 
     user = relationship("User", back_populates="banks")
-    transactions = relationship(
+
+    sent_transactions = relationship(
         "Transaction",
-        back_populates="bank",
-        cascade="all, delete-orphan"
+        foreign_keys=[Transaction.sender_bank_id],
+        back_populates="sender_bank",
+        cascade="all, delete-orphan",
+    )
+
+    received_transactions = relationship(
+        "Transaction",
+        foreign_keys=[Transaction.receiver_bank_id],
+        back_populates="receiver_bank",
+        cascade="all, delete-orphan",
     )

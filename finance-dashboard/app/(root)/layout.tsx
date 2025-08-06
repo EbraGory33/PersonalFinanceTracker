@@ -75,7 +75,7 @@ export default function RootLayout({
         <div className="root-layout">
           <Image src="/icons/logo.svg" width={30} height={30} alt="logo" />
           <div>
-            <MobileNav user={user} />
+            <MobileNav user={user || []} />
           </div>
         </div>
         {children}

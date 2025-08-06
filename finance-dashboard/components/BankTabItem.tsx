@@ -2,18 +2,18 @@
 
 import React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { cn, formUrlQuery } from "@/lib/utils";
+import { cn, form_url_query } from "@/lib/utils";
 
-export const BankTabItem = ({ account, shareableId }: BankTabItemProps) => {
+export const BankTabItem = ({ account, shareable_id }: bank_tab_item_props) => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const isActive = shareableId === account?.shareableId;
+  const isActive = shareable_id === account?.shareable_id;
 
   const handleBankChange = () => {
-    const newUrl = formUrlQuery({
+    const newUrl = form_url_query({
       params: searchParams.toString(),
       key: "id",
-      value: account?.shareableId,
+      value: account?.shareable_id,
     });
     router.push(newUrl, { scroll: false });
   };

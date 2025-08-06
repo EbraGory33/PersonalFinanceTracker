@@ -4,16 +4,16 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { formUrlQuery } from "@/lib/utils";
+import { form_url_query } from "@/lib/utils";
 
-export const Pagination = ({ page, totalPages }: PaginationProps) => {
+export const Pagination = ({ page, total_pages }: pagination_props) => {
   const router = useRouter();
   const searchParams = useSearchParams()!;
 
   const handleNavigation = (type: "prev" | "next") => {
     const pageNumber = type === "prev" ? page - 1 : page + 1;
 
-    const newUrl = formUrlQuery({
+    const newUrl = form_url_query({
       params: searchParams.toString(),
       key: "page",
       value: pageNumber.toString(),
@@ -41,14 +41,14 @@ export const Pagination = ({ page, totalPages }: PaginationProps) => {
         Prev
       </Button>
       <p className="text-14 flex items-center px-2">
-        {page} / {totalPages}
+        {page} / {total_pages}
       </p>
       <Button
         size="lg"
         variant="ghost"
         className="p-0 hover:bg-transparent"
         onClick={() => handleNavigation("next")}
-        disabled={Number(page) >= totalPages}
+        disabled={Number(page) >= total_pages}
       >
         Next
         <Image

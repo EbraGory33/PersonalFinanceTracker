@@ -3,13 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import { sidebarLinks } from "@/constants";
+import { sidebar_links } from "@/constants";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import Footer from "./Footer";
 import { PlaidLink } from "./PlaidLink";
 
-const Sidebar = ({ user }: SiderbarProps) => {
+const Sidebar = ({ user }: siderbar_props) => {
   const pathname = usePathname();
 
   return (
@@ -25,7 +25,7 @@ const Sidebar = ({ user }: SiderbarProps) => {
           />
           <h1 className="sidebar-logo"> Personal Finance</h1>
         </Link>
-        {sidebarLinks.map((item) => {
+        {sidebar_links.map((item) => {
           const isActive =
             pathname === item.route || pathname.startsWith(`${item.route}/`);
 
@@ -37,7 +37,7 @@ const Sidebar = ({ user }: SiderbarProps) => {
             >
               <div className="relative size-6">
                 <Image
-                  src={item.imgURL}
+                  src={item.img_url}
                   alt={item.label}
                   fill
                   className={cn({

@@ -3,7 +3,7 @@ import { revalidateHome } from "./revalidate";
 
 export const createLinkToken = async () => {
   try {
-    const res = await apiFetch("bank/plaid/create_link_token", [], "POST");
+    const res = await apiFetch("bank/plaid/create_link_token", {}, "POST");
     console.log("Link token response:", res);
     return res;
   } catch (error) {
@@ -13,12 +13,12 @@ export const createLinkToken = async () => {
 };
 
 export const exchangePublicToken = async ({
-  publicToken,
-}: exchangePublicTokenProps) => {
+  public_token,
+}: exchange_public_token_props) => {
   try {
-    const res = await apiFetch(
+    await apiFetch(
       "bank/plaid/exchange_public_token",
-      { public_token: publicToken },
+      { public_token: public_token },
       "POST"
     );
     revalidateHome();
@@ -29,7 +29,7 @@ export const exchangePublicToken = async ({
 
 export const getAccounts = async () => {
   try {
-    const res = await apiFetch("bank/getAccounts", [], "GET");
+    const res = await apiFetch("bank/getAccounts", {}, "GET");
     return res;
   } catch (error) {
     console.error("Failed to create link token:", error);
@@ -50,6 +50,29 @@ export const getAccount = async (bankId: string) => {
   }
 };
 
-export const getBankingInfo = async () => {};
+export const getBankingInfo = async () => {
+  try {
+    const res = await apiFetch("bank/userBanks", {}, "GET");
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch bank by account id:", error);
+    return null;
+  }
+};
 
-export const getTransactions = async () => {};
+export const getBankByAccountId = async (shareableId: string) => {
+  try {
+    console.log(`shareableId request => ${shareableId}`);
+    const res = await apiFetch(
+      "bank/getBank",
+      { shareableId: shareableId },
+      "GET"
+    );
+    console.log(`getBankByAccountId-res request => ${res}`);
+    console.log(`getBankByAccountId-res.data request => ${res.data}`);
+    return res;
+  } catch (error) {
+    console.error("Failed to fetch bank by account id:", error);
+    return null;
+  }
+};

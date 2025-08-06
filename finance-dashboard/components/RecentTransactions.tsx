@@ -9,9 +9,9 @@ import { Pagination } from "./Pagination";
 const RecentTransactions = ({
   accounts,
   transactions = [],
-  shareableId,
+  shareable_id,
   page = 1,
-}: RecentTransactionsProps) => {
+}: recent_transactions_props) => {
   //   TODO: refine this
   const rowsPerPage = 10;
   const totalPages = Math.ceil(transactions.length / rowsPerPage);
@@ -29,35 +29,35 @@ const RecentTransactions = ({
       <header className="flex items-center justify-between">
         <h2 className="recent-transactions-label">Recent transactions</h2>
         <Link
-          href={`/transaction-history/?id=${shareableId}`}
+          href={`/transaction-history/?id=${shareable_id}`}
           className="view-all-btn"
         >
           View all
         </Link>
       </header>
-      <Tabs defaultValue={shareableId} className="w-full">
+      <Tabs defaultValue={shareable_id} className="w-full">
         <TabsList className="recent-transactions-tablist">
-          {accounts.map((account: Account) => (
+          {accounts.map((account: AccountData) => (
             // TODO Bank_ID:
-            <TabsTrigger key={account.id} value={account.shareableId}>
+            <TabsTrigger key={account.id} value={account.shareable_id}>
               <BankTabItem
                 key={account.id}
                 account={account}
-                shareableId={shareableId}
+                shareable_id={shareable_id}
               />
             </TabsTrigger>
           ))}
         </TabsList>
 
-        {accounts.map((account: Account) => (
+        {accounts.map((account: AccountData) => (
           <TabsContent
-            value={account.shareableId}
+            value={account.shareable_id}
             key={account.id}
             className="space-y-4"
           >
             <BankInfo
               account={account}
-              shareableId={account.shareableId}
+              shareable_id={account.shareable_id}
               type="full"
             />
 
@@ -65,7 +65,7 @@ const RecentTransactions = ({
 
             {totalPages > 1 && (
               <div className="my-4 w-full">
-                <Pagination totalPages={totalPages} page={page} />
+                <Pagination total_pages={totalPages} page={page} />
               </div>
             )}
           </TabsContent>

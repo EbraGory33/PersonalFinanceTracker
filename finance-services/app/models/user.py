@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 from app.utils.database import Base
+from app.models.transactions import Transaction
 
 
 class User(Base):
@@ -23,9 +24,9 @@ class User(Base):
         dwolla_customer_url (str): Customer URL from Dwolla (optional).
         is_active (bool): User account active status.
     """
-    
+
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
@@ -41,13 +42,18 @@ class User(Base):
     dwolla_customer_url = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
 
-    banks = relationship(
-        "Bank",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
-    transactions = relationship(
+    banks = relationship("Bank", back_populates="user", cascade="all, delete-orphan")
+
+    sent_transactions = relationship(
         "Transaction",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        foreign_keys=[Transaction.sender_id],
+        back_populates="sender",
+        cascade="all, delete-orphan",
+    )
+
+    received_transactions = relationship(
+        "Transaction",
+        foreign_keys=[Transaction.receiver_id],
+        back_populates="receiver",
+        cascade="all, delete-orphan",
     )

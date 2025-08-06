@@ -5,27 +5,27 @@ import { useSearchParams, useRouter } from "next/navigation";
 
 import {
   cn,
-  formUrlQuery,
-  formatAmount,
-  getAccountTypeColors,
+  form_url_query,
+  format_amount,
+  get_account_type_colors,
 } from "@/lib/utils";
 
-const BankInfo = ({ account, shareableId, type }: BankInfoProps) => {
+const BankInfo = ({ account, shareable_id, type }: bank_info_props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const isActive = shareableId === account?.shareableId;
+  const isActive = shareable_id === account?.shareable_id;
 
   const handleBankChange = () => {
-    const newUrl = formUrlQuery({
+    const newUrl = form_url_query({
       params: searchParams.toString(),
       key: "id",
-      value: account?.shareableId,
+      value: account?.shareable_id,
     });
     router.push(newUrl, { scroll: false });
   };
 
-  const colors = getAccountTypeColors(account?.type as AccountTypes);
+  const colors = get_account_type_colors(account?.type as account_types);
 
   return (
     <div
@@ -37,7 +37,7 @@ const BankInfo = ({ account, shareableId, type }: BankInfoProps) => {
       })}
     >
       <figure
-        className={`flex-center h-fit rounded-full bg-blue-100 ${colors.lightBg}`}
+        className={`flex-center h-fit rounded-full bg-blue-100 ${colors.light_bg}`}
       >
         <Image
           src="/icons/connect-bank.svg"
@@ -56,15 +56,15 @@ const BankInfo = ({ account, shareableId, type }: BankInfoProps) => {
           </h2>
           {type === "full" && (
             <p
-              className={`text-12 rounded-full px-3 py-1 font-medium text-blue-700 ${colors.subText} ${colors.lightBg}`}
+              className={`text-12 rounded-full px-3 py-1 font-medium text-blue-700 ${colors.sub_text} ${colors.light_bg}`}
             >
               {account.subtype}
             </p>
           )}
         </div>
 
-        <p className={`text-16 font-medium text-blue-700 ${colors.subText}`}>
-          {formatAmount(account.currentBalance)}
+        <p className={`text-16 font-medium text-blue-700 ${colors.sub_text}`}>
+          {format_amount(account.current_balance)}
         </p>
       </div>
     </div>

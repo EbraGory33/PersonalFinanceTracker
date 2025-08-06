@@ -16,16 +16,15 @@ class UserResponse(BaseModel):
     dwolla_customer_url: Optional[str] = None
     is_active: bool
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
+
 
 class SignupRequest(BaseModel):
     first_name: str = Field(..., min_length=2, max_length=50)
     last_name: str = Field(..., min_length=2, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=8)  # Strong password validation can be added
-    address1: Optional[str] = None
+    address1: str
     city: Optional[str] = None
     state: Optional[str] = None
     postal_code: Optional[str] = None
@@ -42,7 +41,7 @@ class SignupRequest(BaseModel):
                 "city": "New York",
                 "state": "NY",
                 "postal_code": "10001",
-                "date_of_birth": "1990-01-01"
+                "date_of_birth": "1990-01-01",
             }
         }
 
@@ -53,8 +52,5 @@ class SigninRequest(BaseModel):
 
     class Config:
         schema_extra = {
-            "example": {
-                "email": "john.doe@example.com",
-                "password": "SecurePass123"
-            }
+            "example": {"email": "john.doe@example.com", "password": "SecurePass123"}
         }

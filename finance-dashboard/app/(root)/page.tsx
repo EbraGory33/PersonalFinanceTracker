@@ -1,4 +1,5 @@
 "use client";
+
 import HeaderBox from "@/components/HeaderBox";
 import RecentTransactions from "@/components/RecentTransactions";
 import RightSidebar from "@/components/RightSidebar";
@@ -10,17 +11,17 @@ import { useEffect, useState } from "react";
 
 const Home = () => {
   const router = useRouter();
-  const searchParams = useSearchParams(); // 🟢 Fix #2: use this with `useSearchParams`
-  const id = searchParams.get("id");
-  const currentPage = Number(searchParams.get("page")) || 1;
+  const search_params = useSearchParams();
+  const id = search_params.get("id");
+  const current_page = Number(search_params.get("page")) || 1;
 
   const { user, verify, logout, loading, setLoading } = useAuth();
 
-  const [accounts, setAccounts] = useState<any>(null);
-  const [account, setAccount] = useState<any>(null);
+  const [accounts, set_accounts] = useState<accounts_response>();
+  const [account, set_account] = useState<account>();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetch_data = async () => {
       try {
         setLoading(true);
 
@@ -28,14 +29,8 @@ const Home = () => {
         await verify();
 
         // Accounts data
-        const accountsRes = await getAccounts();
-        setAccounts(accountsRes);
-
-        // const Bank_ID =
-        //   (id as string) || accountsRes?.accounts?.[0]?.shareableId || "";
-        // console.log(`const Bank_ID = ${Bank_ID}`);
-        // const accountRes = await getAccount(Bank_ID);
-        // setAccount(accountRes);
+        const accounts_res = await getAccounts();
+        set_accounts(accounts_res);
 
         setLoading(false);
       } catch (err) {
@@ -45,33 +40,30 @@ const Home = () => {
       }
     };
 
-    fetchData();
+    fetch_data();
   }, []);
 
   useEffect(() => {
-    const fetchAccount = async () => {
+    const fetch_account = async () => {
       if (!accounts?.accounts?.length) return;
 
-      const Bank_ID = (id as string) || accounts.accounts[0]?.shareableId || "";
+      const bank_id =
+        (id as string) || accounts.accounts[0]?.shareable_id || "";
 
-      console.log(`Fetching account for Bank_ID: ${Bank_ID}`);
-      const accountRes = await getAccount(Bank_ID);
-      setAccount(accountRes);
+      console.log(`Fetching account for bank_id: ${bank_id}`);
+      const account_res = await getAccount(bank_id);
+      set_account(account_res);
     };
 
-    fetchAccount();
+    fetch_account();
   }, [id, accounts]);
 
-  const Bank_ID = id || accounts?.accounts?.[0]?.bankId || "";
-  const accountsData = accounts?.accounts;
+  const accounts_data = accounts?.accounts;
 
-  const shareableId = (id as string) || accountsData?.[0]?.shareableId;
-  // console.log(`shareableId => ${shareableId}`);
-  // console.log(`accountsData => ${accountsData}`);
+  const shareable_id = (id as string) || accounts_data?.[0]?.shareable_id;
+  console.log(`shareable_id => ${shareable_id}`);
+  console.log(`accounts_data => ${accounts_data}`);
 
-  // console.log(`Bank_ID->${Bank_ID}`);
-
-  // || !account
   if (loading || !accounts) {
     return (
       <section className="home">
@@ -92,30 +84,25 @@ const Home = () => {
           />
 
           <TotalBalanceBox
-            accounts={accounts?.accounts}
-            totalBanks={accounts?.totalBanks}
-            totalCurrentBalance={accounts?.totalCurrentBalance}
+            accounts={accounts_data || []}
+            total_banks={accounts?.total_banks}
+            total_current_balance={accounts?.total_current_balance}
           />
         </header>
+
         <RecentTransactions
-          accounts={accountsData}
-          transactions={account?.transactions}
-          shareableId={shareableId}
-          page={currentPage}
+          accounts={accounts_data || []}
+          transactions={account?.transactions || []}
+          shareable_id={shareable_id || ""}
+          page={current_page}
         />
       </div>
 
       <RightSidebar
-        user={user}
-        transactions={account?.transactions}
-        // transactions={[]}
-        banks={[{ currentBalance: 123.5 }, { currentBalance: 123.5 }]}
+        user={user || []}
+        transactions={account?.transactions || []}
+        banks={accounts_data?.slice(0, 2) || []}
       />
-      {/* <RightSidebar 
-        user={user}
-        transactions={account?.transactions}
-        banks={accountsData?.slice(0, 2)}
-      /> */}
     </section>
   );
 };

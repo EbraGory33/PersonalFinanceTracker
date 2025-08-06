@@ -1,36 +1,35 @@
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { transactionCategoryStyles } from "@/constants";
+import { transaction_category_styles } from "@/constants";
 import {
   cn,
-  formatAmount,
-  formatDateTime,
-  getTransactionStatus,
-  removeSpecialCharacters,
+  format_amount,
+  format_date_time,
+  get_transaction_status,
+  remove_special_characters,
 } from "@/lib/utils";
 
-const CategoryBadge = ({ category }: CategoryBadgeProps) => {
-  const { borderColor, backgroundColor, textColor, chipBackgroundColor } =
-    transactionCategoryStyles[
-      category as keyof typeof transactionCategoryStyles
-    ] || transactionCategoryStyles.default;
+const CategoryBadge = ({ category }: category_badge_props) => {
+  const { border_color, background_color, text_color, chip_background_color } =
+    transaction_category_styles[
+      category as keyof typeof transaction_category_styles
+    ] || transaction_category_styles.default;
 
   return (
-    <div className={cn("category-badge", borderColor, chipBackgroundColor)}>
-      <div className={cn("size-2 rounded-full", backgroundColor)} />
-      <p className={cn("text-[12px] font-medium", textColor)}>{category}</p>
+    <div className={cn("category-badge", border_color, chip_background_color)}>
+      <div className={cn("size-2 rounded-full", background_color)} />
+      <p className={cn("text-[12px] font-medium", text_color)}>{category}</p>
     </div>
   );
 };
 
-const TransactionsTable = ({ transactions }: TransactionTableProps) => {
+const TransactionsTable = ({ transactions }: transaction_table_props) => {
   return (
     <Table>
       <TableHeader className="bg-[#f9fafb]">
@@ -45,8 +44,8 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
       </TableHeader>
       <TableBody>
         {transactions.map((t: Transaction) => {
-          const status = getTransactionStatus(new Date(t.date));
-          const amount = formatAmount(t.amount);
+          const status = get_transaction_status(new Date(t.date));
+          const amount = format_amount(t.amount);
 
           const isDebit = t.type === "debit";
           const isCredit = t.type === "credit";
@@ -61,7 +60,7 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
               <TableCell className="max-w-[250px] pl-2 pr-10">
                 <div className="flex items-center gap-3">
                   <h1 className="text-14 truncate font-semibold text-[#344054]">
-                    {removeSpecialCharacters(t.name)}
+                    {remove_special_characters(t.name)}
                   </h1>
                 </div>
               </TableCell>
@@ -81,11 +80,11 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
               </TableCell>
 
               <TableCell className="min-w-32 pl-2 pr-10">
-                {formatDateTime(new Date(t.date)).dateTime}
+                {format_date_time(new Date(t.date)).date_time}
               </TableCell>
 
               <TableCell className="pl-2 pr-10 capitalize min-w-24">
-                {t.paymentChannel}
+                {t.payment_channel}
               </TableCell>
 
               <TableCell className="pl-2 pr-10 max-md:hidden">

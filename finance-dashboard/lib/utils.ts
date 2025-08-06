@@ -1,4 +1,4 @@
-/* eslint-disable no-prototype-builtins */
+ 
 import { type ClassValue, clsx } from "clsx";
 import qs from "query-string";
 import { twMerge } from "tailwind-merge";
@@ -9,8 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // FORMAT DATE TIME
-export const formatDateTime = (dateString: Date) => {
-  const dateTimeOptions: Intl.DateTimeFormatOptions = {
+export const format_date_time = (date_string: Date) => {
+  const date_time_options: Intl.DateTimeFormatOptions = {
     weekday: "short", // abbreviated weekday name (e.g., 'Mon')
     month: "short", // abbreviated month name (e.g., 'Oct')
     day: "numeric", // numeric day of the month (e.g., '25')
@@ -19,54 +19,54 @@ export const formatDateTime = (dateString: Date) => {
     hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
   };
 
-  const dateDayOptions: Intl.DateTimeFormatOptions = {
+  const date_day_options: Intl.DateTimeFormatOptions = {
     weekday: "short", // abbreviated weekday name (e.g., 'Mon')
     year: "numeric", // numeric year (e.g., '2023')
     month: "2-digit", // abbreviated month name (e.g., 'Oct')
     day: "2-digit", // numeric day of the month (e.g., '25')
   };
 
-  const dateOptions: Intl.DateTimeFormatOptions = {
+  const date_options: Intl.DateTimeFormatOptions = {
     month: "short", // abbreviated month name (e.g., 'Oct')
     year: "numeric", // numeric year (e.g., '2023')
     day: "numeric", // numeric day of the month (e.g., '25')
   };
 
-  const timeOptions: Intl.DateTimeFormatOptions = {
+  const time_options: Intl.DateTimeFormatOptions = {
     hour: "numeric", // numeric hour (e.g., '8')
     minute: "numeric", // numeric minute (e.g., '30')
     hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
   };
 
-  const formattedDateTime: string = new Date(dateString).toLocaleString(
+  const formatted_date_time: string = new Date(date_string).toLocaleString(
     "en-US",
-    dateTimeOptions
+    date_time_options
   );
 
-  const formattedDateDay: string = new Date(dateString).toLocaleString(
+  const formatted_date_day: string = new Date(date_string).toLocaleString(
     "en-US",
-    dateDayOptions
+    date_day_options
   );
 
-  const formattedDate: string = new Date(dateString).toLocaleString(
+  const formatted_date: string = new Date(date_string).toLocaleString(
     "en-US",
-    dateOptions
+    date_options
   );
 
-  const formattedTime: string = new Date(dateString).toLocaleString(
+  const formatted_time: string = new Date(date_string).toLocaleString(
     "en-US",
-    timeOptions
+    time_options
   );
 
   return {
-    dateTime: formattedDateTime,
-    dateDay: formattedDateDay,
-    dateOnly: formattedDate,
-    timeOnly: formattedTime,
+    date_time: formatted_date_time,
+    date_day: formatted_date_day,
+    date_only: formatted_date,
+    time_only: formatted_time,
   };
 };
 
-export function formatAmount(amount: number): string {
+export function format_amount(amount: number): string {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -76,135 +76,133 @@ export function formatAmount(amount: number): string {
   return formatter.format(amount);
 }
 
-export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
+export const parse_stringify = (value: unknown) =>
+  JSON.parse(JSON.stringify(value));
 
-export const removeSpecialCharacters = (value: string) => {
+export const remove_special_characters = (value: string) => {
   return value.replace(/[^\w\s]/gi, "");
 };
 
-interface UrlQueryParams {
+interface Url_query_params {
   params: string;
   key: string;
   value: string;
 }
 
-export function formUrlQuery({ params, key, value }: UrlQueryParams) {
-  const currentUrl = qs.parse(params);
+export function form_url_query({ params, key, value }: Url_query_params) {
+  const current_url = qs.parse(params);
 
-  currentUrl[key] = value;
+  current_url[key] = value;
 
   return qs.stringifyUrl(
     {
       url: window.location.pathname,
-      query: currentUrl,
+      query: current_url,
     },
     { skipNull: true }
   );
 }
 
-export function getAccountTypeColors(type: AccountTypes) {
+export function get_account_type_colors(type: account_types) {
   switch (type) {
     case "depository":
       return {
         bg: "bg-blue-25",
-        lightBg: "bg-blue-100",
+        light_bg: "bg-blue-100",
         title: "text-blue-900",
-        subText: "text-blue-700",
+        sub_text: "text-blue-700",
       };
 
     case "credit":
       return {
         bg: "bg-success-25",
-        lightBg: "bg-success-100",
+        light_bg: "bg-success-100",
         title: "text-success-900",
-        subText: "text-success-700",
+        sub_text: "text-success-700",
       };
 
     default:
       return {
         bg: "bg-green-25",
-        lightBg: "bg-green-100",
+        light_bg: "bg-green-100",
         title: "text-green-900",
-        subText: "text-green-700",
+        sub_text: "text-green-700",
       };
   }
 }
 
-export function countTransactionCategories(
+export function count_transaction_categories(
   transactions: Transaction[]
-): CategoryCount[] {
-  const categoryCounts: { [category: string]: number } = {};
-  let totalCount = 0;
+): category_count[] {
+  const category_counts: { [category: string]: number } = {};
+  let total_count = 0;
 
   // Iterate over each transaction
-  transactions &&
+  if (transactions) {
     transactions.forEach((transaction) => {
-      // Extract the category from the transaction
       const category = transaction.category;
 
-      // If the category exists in the categoryCounts object, increment its count
-      if (categoryCounts.hasOwnProperty(category)) {
-        categoryCounts[category]++;
+      if (category_counts.hasOwnProperty(category)) {
+        category_counts[category]++;
       } else {
-        // Otherwise, initialize the count to 1
-        categoryCounts[category] = 1;
+        category_counts[category] = 1;
       }
 
-      // Increment total count
-      totalCount++;
+      total_count++;
     });
+  }
 
-  // Convert the categoryCounts object to an array of objects
-  const aggregatedCategories: CategoryCount[] = Object.keys(categoryCounts).map(
-    (category) => ({
-      name: category,
-      count: categoryCounts[category],
-      totalCount,
-    })
-  );
+  // Convert the category_counts object to an array of objects
+  const aggregated_categories: category_count[] = Object.keys(
+    category_counts
+  ).map((category) => ({
+    name: category,
+    count: category_counts[category],
+    total_count,
+  }));
 
-  // Sort the aggregatedCategories array by count in descending order
-  aggregatedCategories.sort((a, b) => b.count - a.count);
+  // Sort the aggregated_categories array by count in descending order
+  aggregated_categories.sort((a, b) => b.count - a.count);
 
-  return aggregatedCategories;
+  return aggregated_categories;
 }
 
-export function extractCustomerIdFromUrl(url: string) {
+export function extract_customer_id_from_url(url: string) {
   // Split the URL string by '/'
   const parts = url.split("/");
 
   // Extract the last part, which represents the customer ID
-  const customerId = parts[parts.length - 1];
+  const customer_id = parts[parts.length - 1];
 
-  return customerId;
+  return customer_id;
 }
 
-export function encryptId(id: string) {
+export function encrypt_id(id: string) {
   return btoa(id);
 }
 
-export function decryptId(id: string) {
+export function decrypt_id(id: string) {
   return atob(id);
 }
 
-export const getTransactionStatus = (date: Date) => {
+export const get_transaction_status = (date: Date) => {
   const today = new Date();
-  const twoDaysAgo = new Date(today);
-  twoDaysAgo.setDate(today.getDate() - 2);
+  const two_days_ago = new Date(today);
+  two_days_ago.setDate(today.getDate() - 2);
 
-  return date > twoDaysAgo ? "Processing" : "Success";
+  return date > two_days_ago ? "Processing" : "Success";
 };
 
-export const authFormSchema = (type: string) =>
+export const auth_form_schema = (type: string) =>
   z.object({
     // sign up fields
-    firstName:
+    first_name:
       type === "sign-in"
         ? z.string().optional()
         : z
             .string()
             .min(3, { message: "First name must be at least 3 characters." }),
-    lastName:
+    last_name:
       type === "sign-in"
         ? z.string().optional()
         : z
@@ -229,14 +227,14 @@ export const authFormSchema = (type: string) =>
             .string()
             .min(2, { message: "State must be exactly 2 characters." })
             .max(2, { message: "State must be exactly 2 characters." }),
-    postalCode:
+    postal_code:
       type === "sign-in"
         ? z.string().optional()
         : z
             .string()
             .min(3, { message: "Postal code must be at least 3 characters." })
             .max(6, { message: "Postal code must be at most 6 characters." }),
-    dateOfBirth:
+    date_of_birth:
       type === "sign-in"
         ? z.string().optional()
         : z.string().min(3, {
